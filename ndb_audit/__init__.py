@@ -246,6 +246,3 @@ class Tag(ndb.Model):
         if isinstance(entity_or_key, ndb.Model):
             entity_or_key = entity_or_key.key
         return ndb.Key(parent=entity_or_key, pairs=[('Tag', str(label))])
-
-
-

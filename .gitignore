@@ -4,3 +4,5 @@
 .idea
 venv
 *.pyc
+dist
+ndb_audit.egg-info

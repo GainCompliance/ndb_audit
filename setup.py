@@ -1,8 +1,10 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
-    name = 'ndb-audit',
-    packages = ['ndb-audit'],
+    name='ndb_audit',
+    packages=find_packages(
+        exclude=["*.test", "*.test.*", "test.*", "test"]
+    ),
     version = '0.0.1',
     description = 'Adds audit trail to any NDB entity',
     author='Jason Jones',
