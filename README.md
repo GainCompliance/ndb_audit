@@ -1,8 +1,10 @@
-Adds audit trail to any NDB entity (including Expando-based models)
+Adds an immutable audit trail to any [NDB](https://cloud.google.com/appengine/docs/python/ndb/) entity 
+(including [Expando](https://cloud.google.com/appengine/docs/python/ndb/creating-entity-models#expando)-based models)
 
 Data structures are optimized for write performance and query-ability at the expense of
 read performance and size of data.  However, it is minimally invasive on the entity you add it to.
-It only adds a single property to the main entity and does not prevent you from doing normal get by key
+It only adds two properties to the main entity totalling 32 characters and does not prevent you from 
+doing normal get by key
 
 You should read the below description of the data model (and especially entity groups) to ensure you don't
 cause datastore contention problems with EGs that are too big
