@@ -1,0 +1,9 @@
+# dummy file for nosegae tests
+runtime: python27
+api_version: 1
+threadsafe: no
+instance_class: F4
+
+handlers:
+- url: .*
+  script: ndb_audit.app

@@ -1,0 +1,6 @@
+/cover-html/
+/ndb-audit.iml
+/.coverage
+.idea
+venv
+*.pyc
