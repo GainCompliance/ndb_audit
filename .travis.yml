@@ -11,7 +11,7 @@ env:
 before_install:
 # Install Google App Engine Python SDK
 - if [ ! -d "${GAE_PYTHONPATH}" ]; then
-    wget --quiet https://raw.githubusercontent.com/GoogleCloudPlatform/continuous-deployment-demo/master/scripts/fetch_gae_sdk.py -O fetch_gae_sdk.py
+    wget --quiet https://raw.githubusercontent.com/GoogleCloudPlatform/continuous-deployment-demo/master/scripts/fetch_gae_sdk.py -O fetch_gae_sdk.py;
     python fetch_gae_sdk.py $(dirname "${GAE_PYTHONPATH}");
   fi
 # [START auth]
