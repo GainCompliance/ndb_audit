@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/GainCompliance/ndb_audit.svg)](https://travis-ci.org/GainCompliance/ndb_audit)
+
 Adds an immutable audit trail to any [NDB](https://cloud.google.com/appengine/docs/python/ndb/) entity 
 (including [Expando](https://cloud.google.com/appengine/docs/python/ndb/creating-entity-models#expando)-based models)
 
