@@ -9,9 +9,10 @@ before_install:
      rm -rf ${HOME}/google-cloud-sdk;
      curl https://sdk.cloud.google.com | bash;
      gcloud --version;
+     gcloud -q components install app-engine-python;
   fi
 install:
-- gcloud -q components install app-engine-python
+# print version for troubleshooting
 - gcloud --version
 # Install the Python dependencies
 - pip install -r requirements-dev.txt
