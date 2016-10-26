@@ -43,7 +43,13 @@ the following:
 
 **Index Required**
 
-TODO
+```yaml
+- kind: Audit
+  ancestor: yes
+  properties:
+  - name: ts
+    direction: desc
+```
 
 **Usage**
 
