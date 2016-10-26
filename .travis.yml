@@ -20,7 +20,7 @@ before_install:
 # If the SDK is not already cached, download it and unpack it
 - if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
      # blow away cloud sdk before re-installing
-     rm -rf ${HOME}/google-cloud-sdk
+     rm -rf ${HOME}/google-cloud-sdk;
      curl https://sdk.cloud.google.com | bash;
      gcloud --version;
   fi
