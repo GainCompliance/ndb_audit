@@ -1,41 +1,24 @@
-# Use Dockerized infrastructure
-sudo: false
 language: python
-# Cache our Gcloud SDK between commands
 cache:
   directories:
   - "$HOME/google-cloud-sdk/"
 env:
-# Make sure gcloud command is on our PATH and the App Engine SDK is in the Python path
 - PATH=$PATH:${HOME}/google-cloud-sdk/bin GAE_PYTHONPATH=${HOME}/google-cloud-sdk/platform/google_appengine CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
-# Install Google App Engine Python SDK
-# - if [ ! -d "${GAE_PYTHONPATH}" ]; then
-#    wget --quiet https://raw.githubusercontent.com/GoogleCloudPlatform/continuous-deployment-demo/master/scripts/fetch_gae_sdk.py -O fetch_gae_sdk.py;
-#    python fetch_gae_sdk.py $(dirname "${GAE_PYTHONPATH}");
-#  fi
-# [START auth]
-# Decrypt the credentials we added to the repo using the key we added with the Travis command line tool
-# - openssl aes-256-cbc -K $encrypted_45d1b36fa803_key -iv $encrypted_45d1b36fa803_iv -in credentials.tar.gz.enc -out credentials.tar.gz -d
-# If the SDK is not already cached, download it and unpack it
 - if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
      rm -rf ${HOME}/google-cloud-sdk;
      curl https://sdk.cloud.google.com | bash;
      gcloud --version;
   fi
-# - tar -xzf credentials.tar.gz
-# - mkdir -p lib
-# Here we use the decrypted service account credentials to authenticate the command line tool
-# - gcloud auth activate-service-account --key-file client-secret.json
-# [END auth]
 install:
-# Set the correct project to deploy to
-# - gcloud config set project continuous-deployment-python
 - gcloud -q components install app-engine-python
 - gcloud --version
 # Install the Python dependencies
 - pip install -r requirements-dev.txt
 script:
-# Run the unit tests
 - nosetests . --with-gae --gae-lib-root=${GAE_PYTHONPATH}
-# [END deploy]
+notifications:
+  email: false
+  slack:
+    secure: VJfbgnzAwFlAITf3ER/4hVW1cA0XVkp5kAdqSETL2h4jU10PU/UFWB00X/SXIJZSM7XLcAO2hV9jIXnqKbfsDtosIJymC0qR4OX3CY3u+4NnEcWLEaQqJgtqRpa0Olrn6OHlb2Hek0Gl3xBzGuWxXLwqLaeeO9SYoWFcjphu6leC/CkvCIiaXp0rh/t0wixAGfPMhqlgyd08ew9PPJAhATjyDKZilP0hxMwJNkeA18tNJearYaGyY7oUqXYs01kEfEFAO66sHG64SBW0mH02sLiYvo7IGCWUEuvQVlqXtaB3/WOcN2lsQ9kAxaAFOiIutgoWcZ3Np2kMhZUJn0k0oOfb94io6hHr5fE0Kxqcppz04P+Z0iWMGOqgazAeC4SZKeIsnInDDcESOlf1pxPXEsmgtjISeAhdZYUp6QtKXdOnP74EbCheLBofVrAFplrsWvouGfcP2DOkPdPJz/X1YZk4+8toIhSnVA3412JI2px4tTld1ph3kncj+rYCvg3A0pO7ir2sICGPaUoYaoXxUpPzPtsfG9cqmDJ8zeLdOC9+vTQeOaiYx+/MlaPJBC3CvOIBRd2J8ynjexzk6B0p58ALyt6jx6A9lH0yciltD4LGrzkBItmEi25t77t9nY8qcto3TsaRqjmn4SG7jJCOIvyTV8kSKYV3PQUgDVh719Q=
+
