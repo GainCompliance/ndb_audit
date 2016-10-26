@@ -7,7 +7,7 @@ language: python
 #  - "$HOME/google-cloud-sdk/"
 env:
 # Make sure gcloud command is on our PATH and the App Engine SDK is in the Python path
-- PATH=$PATH:${HOME}/google-cloud-sdk/bin CLOUDSDK_CORE_DISABLE_PROMPTS=1
+- PATH=$PATH:${HOME}/google-cloud-sdk/bin GAE_PYTHONPATH=${HOME}/google-cloud-sdk/platform/google_appengine CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
 # Install Google App Engine Python SDK
 # - if [ ! -d "${GAE_PYTHONPATH}" ]; then
@@ -20,7 +20,6 @@ before_install:
 # If the SDK is not already cached, download it and unpack it
 - if [ ! -d ${HOME}/google-cloud-sdk ]; then
      curl https://sdk.cloud.google.com | bash;
-     ls -al ${HOME};
      gcloud --version;
   fi
 # - tar -xzf credentials.tar.gz
@@ -32,6 +31,7 @@ install:
 # Set the correct project to deploy to
 # - gcloud config set project continuous-deployment-python
 - gcloud -q components install app-engine-python
+- gcloud --version
 # Install the Python dependencies
 - pip install -r requirements-dev.txt
 script:
