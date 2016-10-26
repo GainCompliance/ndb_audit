@@ -11,8 +11,8 @@ cause datastore contention problems with EGs that are too big
 
 **Features**
 * Full history of an entity's changes are recorded in a way that should be easily query-able
-* Audit history is atomically updated when the entity is put, even if all the entitie's properties are the same
-* Supports user (string), timestamp (datetime), data_hash (sha-1 of properties), transaction_id (string) tracking
+* Audit history is atomically updated when the entity is put, even if all the entity's properties are the same
+* Supports user (string), timestamp (datetime), data_hash (SHA-1 of properties), transaction_id (string) tracking
 * Strongly consistent retrieval of audit history
 * Flexible "tagging" system to track progress along the chain of changes by a user, system, etc
 * (Future) "at revision" fetching of data
