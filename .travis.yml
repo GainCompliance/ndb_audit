@@ -19,6 +19,8 @@ before_install:
 # - openssl aes-256-cbc -K $encrypted_45d1b36fa803_key -iv $encrypted_45d1b36fa803_iv -in credentials.tar.gz.enc -out credentials.tar.gz -d
 # If the SDK is not already cached, download it and unpack it
 - if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
+     # blow away cloud sdk before re-installing
+     rm -rf ${HOME}/google-cloud-sdk
      curl https://sdk.cloud.google.com | bash;
      gcloud --version;
   fi
