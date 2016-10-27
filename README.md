@@ -28,7 +28,7 @@ put a new Audit entity 'A' will be created which will be a complete copy of the 
 the following:
 
 * A will be of kind 'Audit'
-* (Future) A will carry the namespace of E if present
+* A will carry the namespace if the [namespace_manager](https://cloud.google.com/appengine/docs/python/refdocs/google.appengine.api.namespace_manager.namespace_manager) is used
 * A will contain a copy of every datastore property of E as it was when it was put
 * The parent entity of A will be E
 * The key of A will be ndb.Key(parent=<key of E>, pairs=[('Audit', <rev_hash of entity>)])
