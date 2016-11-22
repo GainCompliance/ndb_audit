@@ -194,7 +194,20 @@ class Audit(ndb.Expando):
         if 'rev_hash' in props:
             del props['rev_hash']
 
-        a.populate(**props)
+        # special handling for structured properties
+        new_props = props.copy()
+        for k,v in props.iteritems():
+            prop = getattr(entity.__class__, k)
+            if isinstance(prop, ndb.StructuredProperty):
+                logging.debug('found StructuredProperty')
+                if prop._repeated:
+                    # v is a list of dictionaries, but needs to be a list of objects
+                    # just replace with actual list from entity
+                    new_props[k] = getattr(entity, k)
+                else:
+                    pass # TODO
+
+        a.populate(**new_props)
         return a
 
     @classmethod
