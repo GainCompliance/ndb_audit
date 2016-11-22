@@ -8,6 +8,16 @@ from ndb_audit import Audit, AuditMixin, Tag, audit_put_multi_async
 from test import NDBUnitTest
 
 
+class FooInsideModel(ndb.Model):
+    foo = ndb.StringProperty()
+    bar = ndb.IntegerProperty()
+
+class FooStructuredModel(AuditMixin, ndb.Model):
+    foo = ndb.StringProperty()
+    bar = ndb.IntegerProperty()
+    baz = ndb.StructuredProperty(FooInsideModel, repeated=True)
+
+
 class NDBAuditUnitTest(NDBUnitTest):
 
     class FooExpando(AuditMixin, ndb.Expando):
@@ -177,3 +187,34 @@ class NDBAuditUnitTest(NDBUnitTest):
             k = Tag.build_tag_key(ent1, 'bar')
             self.assertEqual(k.parent(), fookey)
             self.assertEqual(k.string_id(), 'bar')
+
+    def test_structured_property(self):
+        foomodel1 = FooInsideModel(foo='foomodela',bar=11)
+        foomodel2 = FooInsideModel(foo='foomodelb',bar=22)
+        foomodel3 = FooInsideModel(foo='foomodelc',bar=33)
+
+        fookey = ndb.Key(FooStructuredModel, 'parentfoo')
+        ent1 = FooStructuredModel(key=fookey, foo='a', bar=1, baz=[foomodel1, foomodel2, foomodel3])
+        self._trans_put(ent1)
+        q1 = Audit.query_by_entity_key(fookey)
+        a = list(q1)[0]
+        self.assertEqual(a.baz, [foomodel1, foomodel2, foomodel3])
+        orig_data_hash = a.data_hash
+
+        # test changing list
+        ent1.baz = [foomodel1, foomodel2]
+        self._trans_put(ent1)
+        a = list(q1)[0]
+        self.assertEqual(a.baz, [foomodel1, foomodel2])
+        self.assertNotEqual(a.data_hash, orig_data_hash)
+        orig_data_hash = a.data_hash
+
+        # test chaning item in list
+        ent1.baz[0].bar = 99999
+        self._trans_put(ent1)
+        a = list(q1)[0]
+        self.assertEqual(a.baz[0].bar, 99999)
+        self.assertNotEqual(a.data_hash, orig_data_hash)
+        
+
+
