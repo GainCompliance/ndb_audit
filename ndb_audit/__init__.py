@@ -117,11 +117,16 @@ class AuditMixin(object):
             new_aud = None # do not write an audit entity
         else:
             logging.info('ndb_audit put_hook %s, putting parent_hash %s, data_hash %s' % (self.key, self.rev_hash, new_data_hash))
-            new_aud = self._build_audit_entity(self.rev_hash, 'jj') # TODO: account
+            new_aud = self._build_audit_entity(self.rev_hash, self._account())
             self.rev_hash = new_aud.rev_hash
-            logging.info(new_aud)
+            logging.debug(new_aud)
         self._skip_pre_hook = True
         return new_aud
+
+    def _account(self):
+        # users must implement this in each model to let the ndb_audit framework know which account is associated
+        # with a given change.  in the mixin this function is not implemented
+        raise NotImplementedError
 
     # NDB model hooks
 

@@ -17,15 +17,23 @@ class FooStructuredModel(AuditMixin, ndb.Model):
     bar = ndb.IntegerProperty()
     baz = ndb.StructuredProperty(FooInsideModel, repeated=True)
 
+    def _account(self):
+        return 'foo-structured-account'
+
 
 class NDBAuditUnitTest(NDBUnitTest):
 
     class FooExpando(AuditMixin, ndb.Expando):
-        pass
+
+        def _account(self):
+            return 'foo-account'
 
     class FooModel(AuditMixin, ndb.Model):
         foo = ndb.StringProperty()
         bar = ndb.IntegerProperty()
+
+        def _account(self):
+            return 'foo-account'
 
     _TEST_CLASSES = [FooExpando, FooModel]
 
@@ -34,16 +42,16 @@ class NDBAuditUnitTest(NDBUnitTest):
             ent = cls(key=ndb.Key(cls.__name__, 'parentfoo'), foo='a', bar=1)
             self._trans_put(ent)
             expected_data_hash = hashlib.sha1('{v1}bar=1|foo=a').hexdigest()[0:16]
-            expected_rev_hash = hashlib.sha1('{v1}None|jj|%s' % expected_data_hash).hexdigest()[0:16]
+            expected_rev_hash = hashlib.sha1('{v1}None|foo-account|%s' % expected_data_hash).hexdigest()[0:16]
             self.assertEqual(ent.data_hash, expected_data_hash)
             self.assertEqual(ent.rev_hash, expected_rev_hash)
 
-            a = Audit.create_from_entity(ent, None, 'jj', '0123456789abcdefghijk')
+            a = Audit.create_from_entity(ent, None, 'foo-account', '0123456789abcdefghijk')
             self.assertIsInstance(a.timestamp, datetime.datetime) # can't accurately check autogen of this
             self.assertEqual(a.kind, str(ent._get_kind()))
             self.assertEqual(hashlib.sha1(a.key.string_id()).hexdigest()[0:16], expected_rev_hash)
             self.assertEqual(a.data_hash, expected_data_hash)
-            self.assertEqual(a.account, 'jj')
+            self.assertEqual(a.account, 'foo-account')
             self.assertEqual(a.request_id, '0123456789abcdef')
             self.assertEqual(a.foo, 'a')
             self.assertEqual(a.bar, 1)
@@ -62,7 +70,7 @@ class NDBAuditUnitTest(NDBUnitTest):
             a_list = list(q1)
             logging.info(a_list)
             expected_data_hash1 = hashlib.sha1('{v1}bar=1|foo=a').hexdigest()[0:16]
-            first_hash = hashlib.sha1('{v1}None|jj|%s' % expected_data_hash1).hexdigest()[0:16]
+            first_hash = hashlib.sha1('{v1}None|foo-account|%s' % expected_data_hash1).hexdigest()[0:16]
             self.assertEqual(a_list[0].foo, 'b')
             self.assertEqual(a_list[0].bar, 2)
             self.assertEqual(a_list[0].data_hash, hashlib.sha1('{v1}bar=2|foo=b').hexdigest()[0:16])
@@ -100,17 +108,17 @@ class NDBAuditUnitTest(NDBUnitTest):
             fookey2 = ndb.Key(cls.__name__, 'parentfoo2')
             ent1 = cls(key=fookey1, foo='a', bar=1)
             expected_data_hash1 = hashlib.sha1('{v1}bar=1|foo=a').hexdigest()[0:16]
-            expected_rev_hash1 = hashlib.sha1('{v1}None|jj|%s' % expected_data_hash1).hexdigest()[0:16]
+            expected_rev_hash1 = hashlib.sha1('{v1}None|foo-account|%s' % expected_data_hash1).hexdigest()[0:16]
             ent2 = cls(key=fookey2, foo='b', bar=2)
             expected_data_hash2 = hashlib.sha1('{v1}bar=2|foo=b').hexdigest()[0:16]
-            expected_rev_hash2 = hashlib.sha1('{v1}None|jj|%s' % expected_data_hash2).hexdigest()[0:16]
+            expected_rev_hash2 = hashlib.sha1('{v1}None|foo-account|%s' % expected_data_hash2).hexdigest()[0:16]
             self.t_put_multi([ent1, ent2])
             self.assertEqual(ent1.data_hash, expected_data_hash1)
             self.assertEqual(ent1.rev_hash, expected_rev_hash1)
             self.assertEqual(ent2.data_hash, expected_data_hash2)
             self.assertEqual(ent2.rev_hash, expected_rev_hash2)
-            a1 = Audit.build_audit_record_key(fookey1, expected_data_hash1, None, 'jj').get()
-            a2 = Audit.build_audit_record_key(fookey2, expected_data_hash2, None, 'jj').get()
+            a1 = Audit.build_audit_record_key(fookey1, expected_data_hash1, None, 'foo-account').get()
+            a2 = Audit.build_audit_record_key(fookey2, expected_data_hash2, None, 'foo-account').get()
             self.assertEqual(a1.foo, 'a')
             self.assertEqual(a1.data_hash, expected_data_hash1)
             self.assertEqual(a1.rev_hash, expected_rev_hash1)
