@@ -130,7 +130,7 @@ class AuditMixin(object):
 
     # NDB model hooks
 
-    @ndb.transactional(xg=True, propagation=ndb.TransactionOptions.MANDATORY)
+    @ndb.transactional_async(xg=True, propagation=ndb.TransactionOptions.MANDATORY)
     def _pre_put_hook(self):
         if self._skip_pre_hook:
             self._skip_pre_hook = False
