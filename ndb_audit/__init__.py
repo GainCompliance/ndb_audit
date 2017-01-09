@@ -99,7 +99,6 @@ class AuditMixin(object):
     def _update_data_hash(self):
         """ modelled after git commit/parent hashes, although merging not implemented yet """
         props = self._to_dict(exclude=['data_hash', 'rev_hash'])
-        logging.info('hashing %s' % props)
         prop_str = '{v1}%s' % '|'.join(['%s=%s' % (k,str(props[k])) for k in sorted(props.iterkeys())])
         self.data_hash = hashlib.sha1(prop_str).hexdigest()[0:16] # shortening hash for performance/storage
         return self.data_hash
@@ -113,10 +112,9 @@ class AuditMixin(object):
         cur_data_hash = self.data_hash
         new_data_hash = self._update_data_hash()
         if cur_data_hash == new_data_hash:
-            logging.warn('ndb_audit put_hook data_hash unchanged for %s, %s' % (self.key, self.data_hash))
+            logging.debug('ndb_audit put_hook data_hash unchanged for %s, %s' % (self.key, self.data_hash))
             new_aud = None # do not write an audit entity
         else:
-            logging.info('ndb_audit put_hook %s, putting parent_hash %s, data_hash %s' % (self.key, self.rev_hash, new_data_hash))
             new_aud = self._build_audit_entity(self.rev_hash, self._account())
             self.rev_hash = new_aud.rev_hash
             logging.debug(new_aud)
@@ -184,7 +182,6 @@ class Audit(ndb.Expando):
 
         a_key = Audit.build_audit_record_key(entity.key, entity.data_hash, parent_hash, account)
         rev_hash = hashlib.sha1(a_key.string_id()).hexdigest()[0:16] # shorten hash for storage/performance
-        logging.debug('newly computed rev_hash is %s' % rev_hash)
         a = Audit(key=a_key,
                   kind=entity._get_kind(),
                   rev_hash=rev_hash,
