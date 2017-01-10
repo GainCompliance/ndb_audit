@@ -79,18 +79,22 @@ import os
 
 from google.appengine.ext import ndb
 
+HASH_LENGTH = 8
+
 class AuditMixin(object):
     """ a mixin for adding audit to NDB models, see file docstring for more information """
 
     # data_hash is added to each entity to make it more cacheable
     # this should never be set directly.  It is computed *only upon put*.  Before that it will be out of date
     # if you change the entity's properties
+    # may not be globally unique -- shortened for storage/performance
     data_hash = ndb.StringProperty(indexed=False, default=None, name='d')
 
     # rev_hash is the unique identifier of a revision of the entity.  it is composed of the previous revisions rev_hash
     # (the parent hash), the account, and the current data_hash
     # this should never be set directly.  It is computed *only upon put*.  Before that it could be out of data
     # if you change the entity's properties
+    # may not be globally unique -- shortened for storage/performance
     rev_hash = ndb.StringProperty(indexed=False, default=None, name='h')
 
     # can be set to true during batch updates
@@ -100,7 +104,7 @@ class AuditMixin(object):
         """ modelled after git commit/parent hashes, although merging not implemented yet """
         props = self._to_dict(exclude=['data_hash', 'rev_hash'])
         prop_str = '{v1}%s' % '|'.join(['%s=%s' % (k,str(props[k])) for k in sorted(props.iterkeys())])
-        self.data_hash = hashlib.sha1(prop_str).hexdigest()[0:16] # shortening hash for performance/storage
+        self.data_hash = hashlib.sha1(prop_str).hexdigest()[0:HASH_LENGTH] # shortening hash for performance/storage
         return self.data_hash
 
     def _build_audit_entity(self, parent_hash, account):
@@ -175,13 +179,13 @@ class Audit(ndb.Expando):
                            request_id=os.environ.get('REQUEST_LOG_ID', ''), timestamp=None):
         """ given an Auditable entity, create a new Audit entity suitable for storing"""
         if request_id and len(request_id) > 16:
-            request_id = request_id[0:16] # shorten hash for storage/performance
+            request_id = request_id[0:16] # shorten request id for storage/performance
 
         if not timestamp:
             timestamp = datetime.datetime.utcnow()
 
         a_key = Audit.build_audit_record_key(entity.key, entity.data_hash, parent_hash, account)
-        rev_hash = hashlib.sha1(a_key.string_id()).hexdigest()[0:16] # shorten hash for storage/performance
+        rev_hash = hashlib.sha1(a_key.string_id()).hexdigest()[0:HASH_LENGTH] # shorten hash for storage/performance
         a = Audit(key=a_key,
                   kind=entity._get_kind(),
                   rev_hash=rev_hash,
