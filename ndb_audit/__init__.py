@@ -72,6 +72,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import base64
 import datetime
 import hashlib
 import logging
@@ -79,7 +80,7 @@ import os
 
 from google.appengine.ext import ndb
 
-HASH_LENGTH = 8
+HASH_LENGTH = 6
 
 class AuditMixin(object):
     """ a mixin for adding audit to NDB models, see file docstring for more information """
@@ -104,7 +105,7 @@ class AuditMixin(object):
         """ modelled after git commit/parent hashes, although merging not implemented yet """
         props = self._to_dict(exclude=['data_hash', 'rev_hash'])
         prop_str = '{v1}%s' % '|'.join(['%s=%s' % (k,str(props[k])) for k in sorted(props.iterkeys())])
-        self.data_hash = hashlib.sha1(prop_str).hexdigest()[0:HASH_LENGTH] # shortening hash for performance/storage
+        self.data_hash = _hash_str(prop_str)
         return self.data_hash
 
     def _build_audit_entity(self, parent_hash, account):
@@ -185,7 +186,7 @@ class Audit(ndb.Expando):
             timestamp = datetime.datetime.utcnow()
 
         a_key = Audit.build_audit_record_key(entity.key, entity.data_hash, parent_hash, account)
-        rev_hash = hashlib.sha1(a_key.string_id()).hexdigest()[0:HASH_LENGTH] # shorten hash for storage/performance
+        rev_hash = _hash_str(a_key.string_id())
         a = Audit(key=a_key,
                   kind=entity._get_kind(),
                   rev_hash=rev_hash,
@@ -264,3 +265,9 @@ class Tag(ndb.Model):
         if isinstance(entity_or_key, ndb.Model):
             entity_or_key = entity_or_key.key
         return ndb.Key(parent=entity_or_key, pairs=[('Tag', str(label))])
+
+
+def _hash_str(data_str):
+    if not data_str:
+        return data_str
+    return base64.urlsafe_b64encode(hashlib.sha1(data_str).digest())[0:HASH_LENGTH] # shorten hash for storage/performance
