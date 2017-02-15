@@ -3,23 +3,31 @@ cache:
   directories:
   - "$HOME/google-cloud-sdk/"
 env:
-- PATH=$PATH:${HOME}/google-cloud-sdk/bin GAE_LIB_ROOT=${HOME}/google-cloud-sdk/platform/google_appengine CLOUDSDK_CORE_DISABLE_PROMPTS=1
+  secure: Z3sbrtcXTy3nbzw+WG1dqj9KfLM7ZBQhPRwxOZalypHpNpDTGBjfQgE6W/psaSoQFhCnois84Aad7/q6oP1C/RzF8tEv/Pqum/xSjvYsCfc78ZFyFg/Tn8hjdXdY04S0aLEAJQa0U+dTPweHoTjuC7jNViQi1G43ZsPsY/Ml63liescrA5ozOKpjrGWJknw8j8QSAis69G1hEGnxSbHt6zPcinjpCLwE6N93mnRPmehYv+ohjs4bntti5hspb5GNKLKnS9N+BURQpsaa0qaKzNhAhlEOHbgAD3+i1oNp5KvhWcascFYWYwVq2TPVNoMUG7zZ7uCsPmWxIS7XjiHGSFItdULeFu+DsRGqgL438zW1J3CD9kHf0nvIny8AxO8gaH7sd5H5v3DEK0lMHuPJ7BssY8kuDQmOmS/nYXLT/b1wvWsBei+DT2h0p9el/x3LK+sCMvlCDUzHvfhAP8ksmfujDzAcLlvchhHf0UmkVcidknO1qPw8v9ho4SRKl2PBWWn4fFDgestwrbxLMDeoVO+UT/HDHWeLaaVcZXvND1V5YH6FcpCW6kphlido2m++67MS80vajHLlvVdQ3eYRUjaiuy/WgYPoYkVOKSaqbsXiOdaab7Vue/ubn9iyA3//O8xsj+wchyBBFCcakgxkTNUosfN2iF+QfUvgFhMMyYM=
 before_install:
-- if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
-     rm -rf ${HOME}/google-cloud-sdk;
-     curl https://sdk.cloud.google.com | bash;
-     gcloud --version;
-     gcloud -q components install app-engine-python;
-  fi
+- if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then rm -rf ${HOME}/google-cloud-sdk;
+  curl https://sdk.cloud.google.com | bash; gcloud --version; gcloud -q components
+  install app-engine-python; fi
 install:
-# print version for troubleshooting
 - gcloud --version
-# Install the Python dependencies
 - pip install -r requirements-dev.txt
 script:
-- ./tests.sh
+- "./tests.sh"
+before_deploy: echo $TRAVIS_TAG
+deploy:
+  provider: pypi
+  user: "${PYPI_USERNAME}"
+  password: "${PYPI_PASSWORD}"
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
+    condition: "$TRAVIS_TAG =~ ^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+after_success:
+- git config --global user.name "python-semantic-release"
+- git config --global user.email "development-public@gaincompliance.com"
+- pip install python-semantic-release
+- semantic-release publish
 notifications:
   email: false
   slack:
     secure: VJfbgnzAwFlAITf3ER/4hVW1cA0XVkp5kAdqSETL2h4jU10PU/UFWB00X/SXIJZSM7XLcAO2hV9jIXnqKbfsDtosIJymC0qR4OX3CY3u+4NnEcWLEaQqJgtqRpa0Olrn6OHlb2Hek0Gl3xBzGuWxXLwqLaeeO9SYoWFcjphu6leC/CkvCIiaXp0rh/t0wixAGfPMhqlgyd08ew9PPJAhATjyDKZilP0hxMwJNkeA18tNJearYaGyY7oUqXYs01kEfEFAO66sHG64SBW0mH02sLiYvo7IGCWUEuvQVlqXtaB3/WOcN2lsQ9kAxaAFOiIutgoWcZ3Np2kMhZUJn0k0oOfb94io6hHr5fE0Kxqcppz04P+Z0iWMGOqgazAeC4SZKeIsnInDDcESOlf1pxPXEsmgtjISeAhdZYUp6QtKXdOnP74EbCheLBofVrAFplrsWvouGfcP2DOkPdPJz/X1YZk4+8toIhSnVA3412JI2px4tTld1ph3kncj+rYCvg3A0pO7ir2sICGPaUoYaoXxUpPzPtsfG9cqmDJ8zeLdOC9+vTQeOaiYx+/MlaPJBC3CvOIBRd2J8ynjexzk6B0p58ALyt6jx6A9lH0yciltD4LGrzkBItmEi25t77t9nY8qcto3TsaRqjmn4SG7jJCOIvyTV8kSKYV3PQUgDVh719Q=
-
