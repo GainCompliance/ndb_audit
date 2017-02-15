@@ -80,6 +80,8 @@ import os
 
 from google.appengine.ext import ndb
 
+__version__ = '0.0.2'
+
 HASH_LENGTH = 6
 
 class AuditMixin(object):
@@ -93,7 +95,7 @@ class AuditMixin(object):
 
     # rev_hash is the unique identifier of a revision of the entity.  it is composed of the previous revisions rev_hash
     # (the parent hash), the account, and the current data_hash
-    # this should never be set directly.  It is computed *only upon put*.  Before that it could be out of data
+    # this should never be set directly.  It is computed *only upon put*.  Before that it could be out of date
     # if you change the entity's properties
     # may not be globally unique -- shortened for storage/performance
     rev_hash = ndb.StringProperty(indexed=False, default=None, name='h')
@@ -165,14 +167,11 @@ class Audit(ndb.Expando):
     _default_indexed = False # TODO: consider making true for better query-ability of entities
 
     kind = ndb.StringProperty(indexed=False, required=True, name='k')
-    # rev hash uniquely identifies this change by parent_hash, account, and data_hash
-    # TODO: should we store this since it's also embedded in the key?  for now yes
-    rev_hash = ndb.StringProperty(indexed=True, required=True, name='h')
     # data hash uniquely identified the NDB properties of the entity
     data_hash = ndb.StringProperty(indexed=False, required=True, name='d')
     parent_hash = ndb.StringProperty(indexed=False, default=None, name='p')
     account = ndb.StringProperty(indexed=False, required=True, name='a')
-    timestamp = ndb.DateTimeProperty(indexed=True, required=True, name='ts')
+    timestamp = ndb.DateTimeProperty(indexed=False, required=True, name='ts')
 
     @classmethod
     def create_from_entity(cls, entity, parent_hash, account, timestamp=None):
@@ -181,10 +180,8 @@ class Audit(ndb.Expando):
             timestamp = datetime.datetime.utcnow()
 
         a_key = Audit.build_audit_record_key(entity.key, entity.data_hash, parent_hash, account)
-        rev_hash = _hash_str(a_key.string_id())
         a = Audit(key=a_key,
                   kind=entity._get_kind(),
-                  rev_hash=rev_hash,
                   data_hash=entity.data_hash,
                   parent_hash=parent_hash,
                   account=account,
@@ -220,14 +217,18 @@ class Audit(ndb.Expando):
         """ given the key of the audited entity, query all audit entries in reverse order
         returns a query object
         Note: this is a strongly consistent query
-        Note: this is in timestamp order, ordering by the commit history tree is not done yet
-              THEREFORE, in cases of system clock lag and concurrent modfiication these could
-              appear out of order
+        Note: these are not ordered
         """
         if not isinstance(entity_or_key, ndb.Key):
             entity_or_key = entity_or_key.key
-        q = Audit.query(ancestor=entity_or_key).order(-Audit.timestamp)
+        q = Audit.query(ancestor=entity_or_key)
         return q
+
+    # rev hash uniquely identifies this change by parent_hash, account, and data_hash
+    # may not be globally unique -- shortened for storage/performance
+    @property
+    def rev_hash(self):
+        return _hash_str(self.key.string_id())
 
 class Tag(ndb.Model):
     """ a tag is a pointer to a specific data hash with a label.  Its parent is the Auditable entity
