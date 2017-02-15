@@ -7,6 +7,10 @@ try:
 except ImportError:
     pass
 
+
+with open('README.md') as f:
+    long_description = f.read()
+
 setup(
     name='ndb_audit',
     packages=find_packages(
@@ -16,7 +20,8 @@ setup(
     entry_points={'console_scripts': ['semantic-release = semantic_release.cli:main']},
     version_format='{tag}',
     setup_requires=['setuptools-git-version==1.0.3'],
-    description = 'Adds audit trail to any NDB entity',
+    description = 'Adds audit trail to any Google Datastore NDB entity',
+    long_description=long_description,
     author='Jason Jones',
     author_email='jason@gaincompliance.com',
     keywords=['google', 'appengine', 'datastore', 'NDB', 'audit'],
