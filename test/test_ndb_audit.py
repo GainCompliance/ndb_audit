@@ -67,7 +67,7 @@ class NDBAuditUnitTest(NDBUnitTest):
             ent2.bar = 2
             self._trans_put(ent2)
             q1 = Audit.query_by_entity_key(fookey)
-            a_list = list(q1)
+            a_list = sorted(list(q1), key=lambda x: x.timestamp, reverse=True)
             logging.info(a_list)
             expected_data_hash1 = _hash_str('{v1}bar=1|foo=a')
             first_hash = _hash_str('{v1}None|foo-account|%s' % expected_data_hash1)
@@ -156,7 +156,7 @@ class NDBAuditUnitTest(NDBUnitTest):
             new_data_hash = _hash_str('{v1}bar=2|foo=b')
             def check_v2():
                 self.assertEqual(ent1.data_hash, new_data_hash)
-                audits = list(Audit.query_by_entity_key(ent1))
+                audits = sorted(list(Audit.query_by_entity_key(ent1)), key=lambda x: x.timestamp, reverse=True)
                 self.assertEqual(len(audits), 2)
                 self.assertEqual(audits[0].data_hash, new_data_hash)
                 self.assertEqual(audits[0].parent_hash, orig_rev_hash)
@@ -205,14 +205,14 @@ class NDBAuditUnitTest(NDBUnitTest):
         ent1 = FooStructuredModel(key=fookey, foo='a', bar=1, baz=[foomodel1, foomodel2, foomodel3])
         self._trans_put(ent1)
         q1 = Audit.query_by_entity_key(fookey)
-        a = list(q1)[0]
+        a = sorted(list(q1), key=lambda x: x.timestamp, reverse=True)[0]
         self.assertEqual(a.baz, [foomodel1, foomodel2, foomodel3])
         orig_data_hash = a.data_hash
 
         # test changing list
         ent1.baz = [foomodel1, foomodel2]
         self._trans_put(ent1)
-        a = list(q1)[0]
+        a = sorted(list(q1), key=lambda x: x.timestamp, reverse=True)[0]
         self.assertEqual(a.baz, [foomodel1, foomodel2])
         self.assertNotEqual(a.data_hash, orig_data_hash)
         orig_data_hash = a.data_hash

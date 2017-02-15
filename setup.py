@@ -1,13 +1,21 @@
+import sys
 from setuptools import find_packages, setup
 
-VERSION = '0.0.1'
+try:
+    from semantic_release import setup_hook
+    setup_hook(sys.argv)
+except ImportError:
+    pass
 
 setup(
     name='ndb_audit',
     packages=find_packages(
         exclude=["*.test", "*.test.*", "test.*", "test"]
     ),
-    version = VERSION,
+    install_requires=[],
+    entry_points={'console_scripts': ['semantic-release = semantic_release.cli:main']},
+    version_format='{tag}',
+    setup_requires=['setuptools-git-version==1.0.3'],
     description = 'Adds audit trail to any NDB entity',
     author='Jason Jones',
     author_email='jason@gaincompliance.com',
