@@ -173,15 +173,10 @@ class Audit(ndb.Expando):
     parent_hash = ndb.StringProperty(indexed=False, default=None, name='p')
     account = ndb.StringProperty(indexed=False, required=True, name='a')
     timestamp = ndb.DateTimeProperty(indexed=True, required=True, name='ts')
-    request_id = ndb.StringProperty(indexed=True, required=True, name='r')
 
     @classmethod
-    def create_from_entity(cls, entity, parent_hash, account,
-                           request_id=os.environ.get('REQUEST_LOG_ID', ''), timestamp=None):
+    def create_from_entity(cls, entity, parent_hash, account, timestamp=None):
         """ given an Auditable entity, create a new Audit entity suitable for storing"""
-        if request_id and len(request_id) > 16:
-            request_id = request_id[0:16] # shorten request id for storage/performance
-
         if not timestamp:
             timestamp = datetime.datetime.utcnow()
 
@@ -193,8 +188,7 @@ class Audit(ndb.Expando):
                   data_hash=entity.data_hash,
                   parent_hash=parent_hash,
                   account=account,
-                  timestamp=timestamp,
-                  request_id=request_id)
+                  timestamp=timestamp)
         props = entity._to_dict()
         if 'data_hash' in props:
             del props['data_hash'] # causes issues I think due to a bug in populate

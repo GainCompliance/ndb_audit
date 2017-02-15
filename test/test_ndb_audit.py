@@ -47,13 +47,12 @@ class NDBAuditUnitTest(NDBUnitTest):
             self.assertEqual(ent.data_hash, expected_data_hash)
             self.assertEqual(ent.rev_hash, expected_rev_hash)
 
-            a = Audit.create_from_entity(ent, None, 'foo-account', '0123456789abcdefghijk')
+            a = Audit.create_from_entity(ent, None, 'foo-account')
             self.assertIsInstance(a.timestamp, datetime.datetime) # can't accurately check autogen of this
             self.assertEqual(a.kind, str(ent._get_kind()))
             self.assertEqual(_hash_str(a.key.string_id()), expected_rev_hash)
             self.assertEqual(a.data_hash, expected_data_hash)
             self.assertEqual(a.account, 'foo-account')
-            self.assertEqual(a.request_id, '0123456789abcdef')
             self.assertEqual(a.foo, 'a')
             self.assertEqual(a.bar, 1)
             self.assertEqual(a.key.parent(), ent.key)
