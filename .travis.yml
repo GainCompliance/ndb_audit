@@ -4,6 +4,9 @@ cache:
   - "$HOME/google-cloud-sdk/"
 python:
 - '2.7'
+addons:
+  apt_packages:
+    - pandoc
 env:
   global:
   - PATH=$PATH:${HOME}/google-cloud-sdk/bin GAE_LIB_ROOT=${HOME}/google-cloud-sdk/platform/google_appengine
