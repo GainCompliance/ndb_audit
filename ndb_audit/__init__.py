@@ -11,7 +11,7 @@ import os
 
 from google.appengine.ext import ndb
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 HASH_LENGTH = 6
 
