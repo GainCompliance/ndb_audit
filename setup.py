@@ -10,7 +10,7 @@ except ImportError:
 
 try:
     import pypandoc
-    description = unicode(pypandoc.convert_file('README.md', 'rst', format='markdown_github', encoding='utf-8'))
+    description = unicode(pypandoc.convert_file('README.md', 'rst', format='markdown', encoding='utf-8'))
 except (IOError, ImportError), e:
     print e
     description = ''
