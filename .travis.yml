@@ -24,7 +24,9 @@ install:
 - "./pip.sh"
 script:
 - "./tests.sh"
-before_deploy: echo $TRAVIS_TAG
+before_deploy:
+  - echo $TRAVIS_TAG
+  - pandoc -h
 deploy:
   provider: pypi
   user: "${PYPI_USERNAME}"
