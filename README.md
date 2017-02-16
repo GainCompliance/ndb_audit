@@ -1,17 +1,21 @@
 [![Build Status](https://travis-ci.org/GainCompliance/ndb_audit.svg)](https://travis-ci.org/GainCompliance/ndb_audit)
 
 Adds an immutable audit trail to any [NDB](https://cloud.google.com/appengine/docs/python/ndb/) entity 
-(including [Expando](https://cloud.google.com/appengine/docs/python/ndb/creating-entity-models#expando)-based models)
+(including [Expando](https://cloud.google.com/appengine/docs/python/ndb/creating-entity-models#expando)-based models)  
+
 
 Data structures are optimized for write performance and query-ability at the expense of
 read performance and size of data.  However, it is minimally invasive on the entity you add it to.
 It only adds two properties to the main entity totalling 32 characters and does not prevent you from 
-doing normal get by key
+doing normal get by key  
+
 
 You should read the below description of the data model (and especially entity groups) to ensure you don't
-cause datastore contention problems with EGs that are too big
+cause datastore contention problems with EGs that are too big  
 
-**Features**
+Features
+--------
+
 * Full history of an entity's changes are recorded in a way that should be easily query-able
 * Audit history is atomically updated when the entity is put, even if all the entity's properties are the same
 * Supports account (string), timestamp (datetime), data_hash (SHA-1 of properties) tracking
@@ -21,7 +25,8 @@ cause datastore contention problems with EGs that are too big
 * (Future) Diffing between revisions
 * (Future) Collision detection and merging
 
-**Data Model**
+Data Model
+----------
 
 For a given entity 'E' of kind 'EKind', ndb_audit will monitor all puts to entities who include the AuditMixin.  Upon
 put a new Audit entity 'A' will be created which will be a complete copy of the entity.  The entity A will have
@@ -43,7 +48,8 @@ the following:
 * No other properties will be added to E, instead you will have to fetch the audit entities --
   this is to keep overhead on E as small as possible
 
-**Index Required**
+Index Required
+--------------
 
 ```yaml
 - kind: Audit
@@ -53,6 +59,7 @@ the following:
     direction: desc
 ```
 
-**Usage**
+Usage
+-----
 
 TODO
