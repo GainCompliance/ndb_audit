@@ -26,6 +26,7 @@ script:
 - "./tests.sh"
 before_deploy:
   - echo $TRAVIS_TAG
+  - pandoc --version
   - pandoc -h
 deploy:
   provider: pypi
