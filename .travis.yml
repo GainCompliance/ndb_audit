@@ -26,8 +26,7 @@ script:
 - "./tests.sh"
 before_deploy:
   - echo $TRAVIS_TAG
-  - pandoc --version
-  - pandoc -h
+  - python setup.py check -s --restructuredtext
 deploy:
   provider: pypi
   user: "${PYPI_USERNAME}"
