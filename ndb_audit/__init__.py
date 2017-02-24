@@ -200,5 +200,7 @@ def _entity_dict(entity):
         elif isinstance(prop, ndb.BlobProperty):
             logging.debug('found BlobProperty')
             # v is the unencoded/unmarshaled value but safer just to hang on to raw binary value
-            props[k] = prop._get_base_value(entity).b_val # TODO: pretty dependent on _BaseValue impl which is not great
+            base_val = prop._get_base_value(entity)
+            if base_val:
+                props[k] = prop._get_base_value(entity).b_val # TODO: pretty dependent on _BaseValue impl which is not great
     return props
