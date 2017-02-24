@@ -36,8 +36,9 @@ class AuditMixin(object):
 
     def _update_data_hash(self):
         """ modelled after git commit/parent hashes, although merging not implemented yet """
-        props = self._to_dict(exclude=['data_hash', 'rev_hash'])
+        props = _entity_dict(self)
         prop_str = '{v1}%s' % '|'.join(['%s=%s' % (k,str(props[k])) for k in sorted(props.iterkeys())])
+        logging.info(prop_str)
         self.data_hash = _hash_str(prop_str)
         return self.data_hash
 
@@ -117,25 +118,9 @@ class Audit(ndb.Expando):
                   parent_hash=parent_hash,
                   account=account,
                   timestamp=timestamp)
-        props = entity._to_dict()
-        if 'data_hash' in props:
-            del props['data_hash'] # causes issues I think due to a bug in populate
-        if 'rev_hash' in props:
-            del props['rev_hash']
 
-        # special handling for structured properties
-        for k,v in props.iteritems():
-            prop = entity._properties[k]
-            if isinstance(prop, ndb.StructuredProperty):
-                logging.debug('found StructuredProperty')
-                if prop._repeated:
-                    # v is a list of dictionaries, but needs to be a list of objects
-                    # just replace with actual list from entity
-                    props[k] = getattr(entity, k)
-                else:
-                    pass # TODO
 
-        a.populate(**props)
+        a.populate(**_entity_dict(entity))
         return a
 
     @classmethod
@@ -197,3 +182,23 @@ def _hash_str(data_str):
     if not data_str:
         return data_str
     return base64.urlsafe_b64encode(hashlib.sha1(data_str).digest())[0:HASH_LENGTH] # shorten hash for storage/performance
+
+
+def _entity_dict(entity):
+    props = entity._to_dict(exclude=['data_hash', 'rev_hash'])
+     # special handling for special properties
+    for k,v in props.iteritems():
+        prop = entity._properties[k]
+        if isinstance(prop, ndb.StructuredProperty):
+            logging.debug('found StructuredProperty')
+            if prop._repeated:
+                # v is a list of dictionaries, but needs to be a list of objects
+                # just replace with actual list from entity
+                props[k] = getattr(entity, k)
+            else:
+                pass # TODO
+        elif isinstance(prop, ndb.BlobProperty):
+            logging.debug('found BlobProperty')
+            # v is the unencoded/unmarshaled value but safer just to hang on to raw binary value
+            props[k] = prop._get_base_value(entity).b_val # TODO: pretty dependent on _BaseValue impl which is not great
+    return props
