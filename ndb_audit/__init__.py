@@ -128,6 +128,7 @@ class Audit(ndb.Expando):
         """ returns key for audit record -- uses data_hash property which may not be up to date """
         return ndb.Key(parent=entity_key,
                        pairs=[('Audit', '{v1}%s|%s|%s' % (parent_hash, account, data_hash))])
+
     @classmethod
     def query_by_entity_key(cls, entity_or_key):
         """ given the key of the audited entity, query all audit entries in reverse order
@@ -173,6 +174,10 @@ class Tag(ndb.Model):
     def label(self):
         return self.key.string_id()
 
+    @property
+    def entity_key(self):
+        return self.key.parent()
+
     @classmethod
     def create_from_entity(cls, entity, label):
         return Tag.create_from_rev_hash(entity.key, entity._account(), label, entity.rev_hash)
@@ -185,6 +190,17 @@ class Tag(ndb.Model):
         t = Tag(key=key, account=account, rev_hash=rev_hash, timestamp=datetime.datetime.utcnow())
         return t
 
+    @classmethod
+    def query_by_entity_key(cls, entity_or_key):
+        """ given the key of the audited entity, query all tags
+        :returns a query object
+        Note: this is a strongly consistent query
+        Note: these are not ordered
+        """
+        if not isinstance(entity_or_key, ndb.Key):
+            entity_or_key = entity_or_key.key
+        q = Tag.query(ancestor=entity_or_key)
+        return q
 
     @classmethod
     def _build_tag_key(cls, entity_or_key, label):

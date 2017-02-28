@@ -214,7 +214,7 @@ class NDBAuditUnitTest(NDBUnitTest):
             ent1 = cls(key=fookey, foo='a', bar=1)
             self._trans_put(ent1)
             t1 = Tag.create_from_entity(ent1, 'abc123')
-            self.assertEqual(t1.key.parent(), fookey)
+            self.assertEqual(t1.entity_key, fookey)
             self.assertEqual(t1.label, 'abc123')
             self.assertEqual(t1.account, 'foo-account')
             self.assertEqual(t1.rev_hash, ent1.rev_hash)
@@ -228,11 +228,29 @@ class NDBAuditUnitTest(NDBUnitTest):
             for f, expected_k, expected_hash in zip(tag_futures, keys, rev_hashes):
                 k = f.get_result()
                 tag = k.get()
-                self.assertEqual(tag.key.parent(), expected_k)
                 self.assertEqual(tag.label, 'abc123')
                 self.assertEqual(tag.account, 'foo-account')
                 self.assertEqual(tag.rev_hash, expected_hash)
+                self.assertEqual(tag.entity_key, expected_k)
 
+    def test_tag_query_by_entity_key(self):
+        for cls in self._TEST_CLASSES:
+            fookey = ndb.Key(cls.__name__, 'parentfoo')
+            q1 = Tag.query_by_entity_key(fookey)
+            self.assertEqual(len(list(q1)), 0)
+
+            ent1 = cls(key=fookey, foo='a', bar=1, custom_prop=self.CUSTOM_VAL_1)
+            self._trans_put(ent1)
+            t1 = Tag.create_from_entity(ent1, 'abc123')
+            t1.put()
+            q1 = Tag.query_by_entity_key(fookey)
+            q_list = list(q1)
+            logging.info(q_list)
+            self.assertEqual(len(q_list), 1)
+            self.assertEqual(q_list[0].rev_hash, ent1.rev_hash)
+            self.assertEqual(q_list[0].label, 'abc123')
+            self.assertEqual(q_list[0].account, 'foo-account')
+            self.assertEqual(q_list[0].entity_key, fookey)
 
     def test_structured_property(self):
         foomodel1 = FooInsideModel(foo='foomodela',bar=11)
