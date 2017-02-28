@@ -203,6 +203,10 @@ class Tag(ndb.Model):
         return q
 
     @classmethod
+    def get_by_entity_key_label_async(cls, entity_or_key, label):
+        return cls._build_tag_key(entity_or_key, label).get_async()
+
+    @classmethod
     def _build_tag_key(cls, entity_or_key, label):
         if isinstance(entity_or_key, ndb.Model):
             entity_or_key = entity_or_key.key

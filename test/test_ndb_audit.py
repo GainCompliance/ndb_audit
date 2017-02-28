@@ -203,10 +203,12 @@ class NDBAuditUnitTest(NDBUnitTest):
         for cls in self._TEST_CLASSES:
             fookey = ndb.Key(cls.__name__, 'parentfoo')
             t1 = Tag.create_from_rev_hash(fookey, 'jcj', 'abc123', 'revfoo')
-            self.assertEqual(t1.key.parent(), fookey)
-            self.assertEqual(t1.label, 'abc123')
-            self.assertEqual(t1.account, 'jcj')
-            self.assertEqual(t1.rev_hash, 'revfoo')
+            t1.put()
+            t2 = Tag.get_by_entity_key_label_async(fookey, 'abc123').get_result()
+            self.assertEqual(t2.key.parent(), fookey)
+            self.assertEqual(t2.label, 'abc123')
+            self.assertEqual(t2.account, 'jcj')
+            self.assertEqual(t2.rev_hash, 'revfoo')
 
     def test_tag_create_from_entity(self):
         for cls in self._TEST_CLASSES:
@@ -214,11 +216,12 @@ class NDBAuditUnitTest(NDBUnitTest):
             ent1 = cls(key=fookey, foo='a', bar=1)
             self._trans_put(ent1)
             t1 = Tag.create_from_entity(ent1, 'abc123')
-            self.assertEqual(t1.entity_key, fookey)
-            self.assertEqual(t1.label, 'abc123')
-            self.assertEqual(t1.account, 'foo-account')
-            self.assertEqual(t1.rev_hash, ent1.rev_hash)
-
+            t1.put()
+            t2 = Tag.get_by_entity_key_label_async(ent1, 'abc123').get_result()
+            self.assertEqual(t2.entity_key, fookey)
+            self.assertEqual(t2.label, 'abc123')
+            self.assertEqual(t2.account, 'foo-account')
+            self.assertEqual(t2.rev_hash, ent1.rev_hash)
 
     def test_tag_multi(self):
         for cls in self._TEST_CLASSES:
