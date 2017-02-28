@@ -6,7 +6,7 @@ import logging
 
 from google.appengine.ext import ndb
 
-from ndb_audit import Audit, AuditMixin, Tag, audit_put_multi_async, _hash_str
+from ndb_audit import Audit, AuditMixin, Tag, audit_put_multi_async, tag_multi_from_rev_hash_async, _hash_str
 from test import NDBUnitTest
 
 
@@ -66,7 +66,7 @@ class NDBAuditUnitTest(NDBUnitTest):
             self.assertEqual(ent.data_hash, expected_data_hash)
             self.assertEqual(ent.rev_hash, expected_rev_hash)
 
-            a = Audit.create_from_entity(ent, None, 'foo-account')
+            a = Audit.create_from_entity(ent, None)
             self.assertIsInstance(a.timestamp, datetime.datetime) # can't accurately check autogen of this
             self.assertEqual(a.kind, str(ent._get_kind()))
             self.assertEqual(_hash_str(a.key.string_id()), expected_rev_hash)
@@ -198,32 +198,40 @@ class NDBAuditUnitTest(NDBUnitTest):
             self._trans_put(ent1)
             check_v2()
 
-    def test_tag_create_from_data_hash(self):
+    def test_tag_create_from_rev_hash(self):
         for cls in self._TEST_CLASSES:
             fookey = ndb.Key(cls.__name__, 'parentfoo')
-            t1 = Tag.create_from_data_hash(fookey, 'jcj', 'abc123')
-            self.assertEqual(t1.key.string_id(), 'jcj')
-            self.assertEqual(t1.data_hash, 'abc123')
+            t1 = Tag.create_from_rev_hash(fookey, 'jcj', 'abc123', 'revfoo')
+            self.assertEqual(t1.key.parent(), fookey)
+            self.assertEqual(t1.label, 'abc123')
+            self.assertEqual(t1.account, 'jcj')
+            self.assertEqual(t1.rev_hash, 'revfoo')
 
     def test_tag_create_from_entity(self):
         for cls in self._TEST_CLASSES:
             fookey = ndb.Key(cls.__name__, 'parentfoo')
             ent1 = cls(key=fookey, foo='a', bar=1)
             self._trans_put(ent1)
-            t1 = Tag.create_from_entity(ent1, 'jcj')
-            self.assertEqual(t1.key.string_id(), 'jcj')
-            self.assertEqual(t1.data_hash, ent1.data_hash)
+            t1 = Tag.create_from_entity(ent1, 'abc123')
+            self.assertEqual(t1.key.parent(), fookey)
+            self.assertEqual(t1.label, 'abc123')
+            self.assertEqual(t1.account, 'foo-account')
+            self.assertEqual(t1.rev_hash, ent1.rev_hash)
 
-    def test_build_tag_key(self):
+
+    def test_tag_multi(self):
         for cls in self._TEST_CLASSES:
-            fookey = ndb.Key(cls.__name__, 'parentfoo')
-            k = Tag.build_tag_key(fookey, 'bar')
-            self.assertEqual(k.parent(), fookey)
-            self.assertEqual(k.string_id(), 'bar')
-            ent1 = cls(key=fookey, foo='a', bar=1)
-            k = Tag.build_tag_key(ent1, 'bar')
-            self.assertEqual(k.parent(), fookey)
-            self.assertEqual(k.string_id(), 'bar')
+            keys = [ndb.Key(cls.__name__, k) for k in ['parent1', 'parent2', 'parent3']]
+            rev_hashes = ['foohash', 'barhash', 'bazhash']
+            tag_futures = tag_multi_from_rev_hash_async(keys, rev_hashes, 'foo-account', 'abc123')
+            for f, expected_k, expected_hash in zip(tag_futures, keys, rev_hashes):
+                k = f.get_result()
+                tag = k.get()
+                self.assertEqual(tag.key.parent(), expected_k)
+                self.assertEqual(tag.label, 'abc123')
+                self.assertEqual(tag.account, 'foo-account')
+                self.assertEqual(tag.rev_hash, expected_hash)
+
 
     def test_structured_property(self):
         foomodel1 = FooInsideModel(foo='foomodela',bar=11)

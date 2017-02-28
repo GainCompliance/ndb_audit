@@ -42,8 +42,8 @@ class AuditMixin(object):
         self.data_hash = _hash_str(prop_str)
         return self.data_hash
 
-    def _build_audit_entity(self, parent_hash, account):
-        return Audit.create_from_entity(self, parent_hash, account)
+    def _build_audit_entity(self, parent_hash):
+        return Audit.create_from_entity(self, parent_hash)
 
     def _batch_put_hook(self):
         """ sets new data_hash, turns off regular put hook and returns audit entity ready for saving """
@@ -54,7 +54,7 @@ class AuditMixin(object):
             logging.debug('ndb_audit put_hook data_hash unchanged for %s, %s' % (self.key, self.data_hash))
             new_aud = None # do not write an audit entity
         else:
-            new_aud = self._build_audit_entity(self.rev_hash, self._account())
+            new_aud = self._build_audit_entity(self.rev_hash)
             self.rev_hash = new_aud.rev_hash
             logging.debug(new_aud)
         self._skip_pre_hook = True
@@ -106,17 +106,17 @@ class Audit(ndb.Expando):
     timestamp = ndb.DateTimeProperty(indexed=False, required=True, name='ts')
 
     @classmethod
-    def create_from_entity(cls, entity, parent_hash, account, timestamp=None):
+    def create_from_entity(cls, entity, parent_hash, timestamp=None):
         """ given an Auditable entity, create a new Audit entity suitable for storing"""
         if not timestamp:
             timestamp = datetime.datetime.utcnow()
 
-        a_key = Audit.build_audit_record_key(entity.key, entity.data_hash, parent_hash, account)
+        a_key = Audit.build_audit_record_key(entity.key, entity.data_hash, parent_hash, entity._account())
         a = Audit(key=a_key,
                   kind=entity._get_kind(),
                   data_hash=entity.data_hash,
                   parent_hash=parent_hash,
-                  account=account,
+                  account=entity._account(),
                   timestamp=timestamp)
 
 
@@ -146,33 +146,48 @@ class Audit(ndb.Expando):
     def rev_hash(self):
         return _hash_str(self.key.string_id())
 
+
+def tag_multi_from_rev_hash_async(entity_keys, rev_hashes, account, label):
+    """ tag all of the supplied entity keys at the given rev hashes with the given label
+    this is not transactional, it may only partially apply in failure scenarios.
+    this is a idempotent action
+
+    :returns NDB Future
+    """
+    to_put = [Tag.create_from_rev_hash(k, account, label, r) for k,r in zip(entity_keys, rev_hashes)]
+    return ndb.put_multi_async(to_put)
+
+
 class Tag(ndb.Model):
-    """ a tag is a pointer to a specific data hash with a label.  Its parent is the Auditable entity
+    """ a tag is a pointer to a specific rev hash with a label.  Its parent is the Auditable entity
     "labels" are flexible, they can be any string safe for use in an NDB key.  The key is composed of the parent
     entity and the label so that tags can be efficiently fetched and only one tag per entity per label can exist
-    index.yaml entry required for this entity:
-    TODO
     """
 
-    data_hash = ndb.StringProperty(indexed=False, required=True, name='d')
+    rev_hash = ndb.StringProperty(indexed=False, required=True, name='r')
     timestamp = ndb.DateTimeProperty(indexed=False, required=True, name='ts')
+    account = ndb.StringProperty(indexed=False, required=True, name='a')
 
+
+    @property
+    def label(self):
+        return self.key.string_id()
 
     @classmethod
     def create_from_entity(cls, entity, label):
-        return Tag.create_from_data_hash(entity.key, label, entity.data_hash)
+        return Tag.create_from_rev_hash(entity.key, entity._account(), label, entity.rev_hash)
 
 
     @classmethod
-    def create_from_data_hash(cls, entity_key, label, data_hash):
+    def create_from_rev_hash(cls, entity_key, account, label, rev_hash):
         """ for putting when you don't have the keys """
-        key = Tag.build_tag_key(entity_key, label)
-        t = Tag(key=key, data_hash=data_hash, timestamp=datetime.datetime.utcnow())
+        key = Tag._build_tag_key(entity_key, label)
+        t = Tag(key=key, account=account, rev_hash=rev_hash, timestamp=datetime.datetime.utcnow())
         return t
 
 
     @classmethod
-    def build_tag_key(cls, entity_or_key, label):
+    def _build_tag_key(cls, entity_or_key, label):
         if isinstance(entity_or_key, ndb.Model):
             entity_or_key = entity_or_key.key
         return ndb.Key(parent=entity_or_key, pairs=[('Tag', str(label))])
