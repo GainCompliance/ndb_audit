@@ -3,6 +3,7 @@ import datetime
 import hashlib
 import json
 import logging
+import marshal
 
 from google.appengine.ext import ndb
 
@@ -12,10 +13,10 @@ from test import NDBUnitTest
 
 class FooProperty(ndb.BlobProperty):
     def _to_base_type(self, value):
-        return base64.b64encode(json.dumps(value))
+        return marshal.dumps(value)
 
     def _from_base_type(self, value):
-        return json.loads(base64.b64decode(value))
+        return marshal.loads(value)
 
 
 class FooInsideModel(ndb.Model):
