@@ -255,6 +255,12 @@ class NDBAuditUnitTest(NDBUnitTest):
             self.assertEqual(q_list[0].account, 'foo-account')
             self.assertEqual(q_list[0].entity_key, fookey)
 
+            # add rev hash
+            q2 = Tag.query_by_entity_key(fookey, 'wronghash')
+            self.assertEqual(len(list(q2)), 0)
+            q2 = Tag.query_by_entity_key(fookey, ent1.rev_hash)
+            self.assertEqual(len(list(q2)), 1)
+
     def test_structured_property(self):
         foomodel1 = FooInsideModel(foo='foomodela',bar=11)
         foomodel2 = FooInsideModel(foo='foomodelb',bar=22)

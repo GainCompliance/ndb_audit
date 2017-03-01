@@ -165,7 +165,7 @@ class Tag(ndb.Model):
     entity and the label so that tags can be efficiently fetched and only one tag per entity per label can exist
     """
 
-    rev_hash = ndb.StringProperty(indexed=False, required=True, name='r')
+    rev_hash = ndb.StringProperty(indexed=True, required=True, name='r')
     timestamp = ndb.DateTimeProperty(indexed=False, required=True, name='ts')
     account = ndb.StringProperty(indexed=False, required=True, name='a')
 
@@ -191,7 +191,7 @@ class Tag(ndb.Model):
         return t
 
     @classmethod
-    def query_by_entity_key(cls, entity_or_key):
+    def query_by_entity_key(cls, entity_or_key, rev_hash=None):
         """ given the key of the audited entity, query all tags
         :returns a query object
         Note: this is a strongly consistent query
@@ -200,6 +200,8 @@ class Tag(ndb.Model):
         if not isinstance(entity_or_key, ndb.Key):
             entity_or_key = entity_or_key.key
         q = Tag.query(ancestor=entity_or_key)
+        if rev_hash:
+            q = q.filter(Tag.rev_hash == rev_hash)
         return q
 
     @classmethod
