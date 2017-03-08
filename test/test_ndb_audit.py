@@ -269,15 +269,14 @@ class NDBAuditUnitTest(NDBUnitTest):
         fookey = ndb.Key(FooStructuredModel, 'parentfoo')
         ent1 = FooStructuredModel(key=fookey, foo='a', bar=1, baz=[foomodel1, foomodel2, foomodel3])
         self._trans_put(ent1)
-        q1 = Audit.query_by_entity_key(fookey)
-        a = sorted(list(q1), key=lambda x: x.timestamp, reverse=True)[0]
+        a = sorted(list(Audit.query_by_entity_key(fookey)), key=lambda x: x.timestamp, reverse=True)[0]
         self.assertEqual(a.baz, [foomodel1, foomodel2, foomodel3])
         orig_data_hash = a.data_hash
 
         # test changing list
         ent1.baz = [foomodel1, foomodel2]
         self._trans_put(ent1)
-        a = sorted(list(q1), key=lambda x: x.timestamp, reverse=True)[0]
+        a = sorted(list(Audit.query_by_entity_key(fookey)), key=lambda x: x.timestamp, reverse=True)[0]
         self.assertEqual(a.baz, [foomodel1, foomodel2])
         self.assertNotEqual(a.data_hash, orig_data_hash)
         orig_data_hash = a.data_hash
@@ -285,11 +284,11 @@ class NDBAuditUnitTest(NDBUnitTest):
         # test chaning item in list
         ent1.baz[0].bar = 99999
         self._trans_put(ent1)
-        a = list(q1)[0]
+        a = sorted(list(Audit.query_by_entity_key(fookey)), key=lambda x: x.timestamp, reverse=True)[0]
         self.assertEqual(a.baz[0].bar, 99999)
         self.assertNotEqual(a.data_hash, orig_data_hash)
         
     def test_hash_str(self):
         self.assertEqual(_hash_str(None), None)
         self.assertEqual(_hash_str(''), '')
-        self.assertEqual(_hash_str('foo'), base64.urlsafe_b64encode(hashlib.sha1('foo').digest())[0:6])
+        self.assertEqual(_hash_str('foo'), base64.urlsafe_b64encode(hashlib.sha1('foo').digest())[0:10])

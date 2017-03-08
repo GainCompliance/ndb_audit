@@ -4,7 +4,7 @@ Adds an immutable audit trail to any
 `NDB <https://cloud.google.com/appengine/docs/python/ndb/>`__ entity
 (including
 `Expando <https://cloud.google.com/appengine/docs/python/ndb/creating-entity-models#expando>`__-based
-models)
+models) built by the `engineering team at Gain Compliance <https://gaincompliance.com>`__.
 
 Data structures are optimized for write performance and query-ability at
 the expense of read performance and size of data. However, it is

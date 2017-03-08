@@ -13,7 +13,7 @@ from google.appengine.ext import ndb
 
 __version__ = '1.1.1'
 
-HASH_LENGTH = 6
+HASH_LENGTH = 10
 
 class AuditMixin(object):
     """ a mixin for adding audit to NDB models, see file docstring for more information """
