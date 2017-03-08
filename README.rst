@@ -64,16 +64,6 @@ A will have the following:
    fetch the audit entities -- this is to keep overhead on E as small as
    possible
 
-Index Required
---------------
-
-::
-
-    - kind: Audit
-      ancestor: yes
-      properties:
-      - name: ts
-        direction: desc
 
 Usage
 -----
