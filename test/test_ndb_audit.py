@@ -291,4 +291,4 @@ class NDBAuditUnitTest(NDBUnitTest):
     def test_hash_str(self):
         self.assertEqual(_hash_str(None), None)
         self.assertEqual(_hash_str(''), '')
-        self.assertEqual(_hash_str('foo'), base64.urlsafe_b64encode(hashlib.sha1('foo').digest())[0:10])
+        self.assertEqual(_hash_str('foo'), base64.urlsafe_b64encode(hashlib.sha1('foo').digest()[0:8]).rstrip('='))

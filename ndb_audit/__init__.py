@@ -13,7 +13,7 @@ from google.appengine.ext import ndb
 
 __version__ = '1.1.2'
 
-HASH_LENGTH = 10
+HASH_LENGTH = 8 # (in bytes out of 20 bytes for SHA-1)
 
 class AuditMixin(object):
     """ a mixin for adding audit to NDB models, see file docstring for more information """
@@ -218,7 +218,7 @@ class Tag(ndb.Model):
 def _hash_str(data_str):
     if not data_str:
         return data_str
-    return base64.urlsafe_b64encode(hashlib.sha1(data_str).digest())[0:HASH_LENGTH] # shorten hash for storage/performance
+    return base64.urlsafe_b64encode(hashlib.sha1(data_str).digest()[0:HASH_LENGTH]).rstrip('=')
 
 
 def _entity_dict(entity):
