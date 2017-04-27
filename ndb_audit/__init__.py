@@ -47,18 +47,21 @@ class AuditMixin(object):
 
     def _batch_put_hook(self):
         """ sets new data_hash, turns off regular put hook and returns audit entity ready for saving """
-        # TODO: think through exception handling here
-        cur_data_hash = self.data_hash
-        new_data_hash = self._update_data_hash()
-        if cur_data_hash == new_data_hash:
-            logging.debug('ndb_audit put_hook data_hash unchanged for %s, %s' % (self.key, self.data_hash))
-            new_aud = None # do not write an audit entity
-        else:
-            new_aud = self._build_audit_entity(self.rev_hash)
-            self.rev_hash = new_aud.rev_hash
-            logging.debug(new_aud)
-        self._skip_pre_hook = True
-        return new_aud
+        try:
+            cur_data_hash = self.data_hash
+            new_data_hash = self._update_data_hash()
+            if cur_data_hash == new_data_hash:
+                logging.debug('ndb_audit put_hook data_hash unchanged for %s, %s' % (self.key, self.data_hash))
+                new_aud = None # do not write an audit entity
+            else:
+                new_aud = self._build_audit_entity(self.rev_hash)
+                self.rev_hash = new_aud.rev_hash
+                logging.debug(new_aud)
+            self._skip_pre_hook = True
+            return new_aud
+        except Exception, e:
+            logging.exception('failed ndb_audit batch put')
+            raise e
 
     def _account(self):
         # users must implement this in each model to let the ndb_audit framework know which account is associated
@@ -119,7 +122,7 @@ class Audit(ndb.Expando):
                   account=entity._account(),
                   timestamp=timestamp)
 
-
+        logging.info(entity)
         a.populate(**_entity_dict(entity))
         return a
 
@@ -238,6 +241,13 @@ def _entity_dict(entity):
             logging.debug('found BlobProperty')
             # v is the unencoded/unmarshaled value but safer just to hang on to raw binary value
             base_val = prop._get_base_value(entity)
-            if base_val:
-                props[k] = prop._get_base_value(entity).b_val # TODO: pretty dependent on _BaseValue impl which is not great
+            if not base_val:
+                continue
+
+            logging.info(base_val)
+            # TODO: pretty dependent on _BaseValue impl which is not great
+            if isinstance(base_val, list):
+                props[k] = [b.b_val for b in base_val]
+            elif hasattr(base_val, 'b_val'):
+                props[k] = base_val.b_val
     return props

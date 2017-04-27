@@ -24,6 +24,12 @@ class FooInsideModel(ndb.Model):
     bar = ndb.IntegerProperty()
 
 
+class FooRepeatedModel(AuditMixin, ndb.Model):
+    foo = ndb.StringProperty(repeated=True)
+
+    def _account(self):
+        return 'foo-repeated-account'
+
 class FooStructuredModel(AuditMixin, ndb.Model):
     foo = ndb.StringProperty()
     bar = ndb.IntegerProperty()
@@ -287,7 +293,20 @@ class NDBAuditUnitTest(NDBUnitTest):
         a = sorted(list(Audit.query_by_entity_key(fookey)), key=lambda x: x.timestamp, reverse=True)[0]
         self.assertEqual(a.baz[0].bar, 99999)
         self.assertNotEqual(a.data_hash, orig_data_hash)
-        
+
+    def test_repeated_property(self):
+        foo_key = ndb.Key('FooRepeatedModel', 'parentfoo')
+        foomodel1 = FooRepeatedModel(key=foo_key, foo=['foo', 'bar', 'baz'])
+        self._trans_put(foomodel1)
+        g = foo_key.get()
+        g.foo.append('qux')
+        self._trans_put(g)
+
+        a = sorted(list(Audit.query_by_entity_key(foo_key)), key=lambda x: x.timestamp, reverse=True)
+        self.assertEqual(a[0].foo, ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(a[1].foo, ['foo', 'bar', 'baz'])
+
+
     def test_hash_str(self):
         self.assertEqual(_hash_str(None), None)
         self.assertEqual(_hash_str(''), '')
