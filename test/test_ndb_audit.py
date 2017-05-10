@@ -205,6 +205,19 @@ class NDBAuditUnitTest(NDBUnitTest):
             self._trans_put(ent1)
             check_v2()
 
+
+    def test_put_fail_raises(self):
+        class FooRequiredModel(AuditMixin, ndb.Model):
+            foo = ndb.StringProperty(required=True)
+            bar = ndb.IntegerProperty()
+
+            def _account(self):
+                return 'foo-account'
+
+        fookey = ndb.Key(FooRequiredModel.__name__, 'parentfoo')
+        ent1 = FooRequiredModel(key=fookey, bar=1) # missing required property
+        self.assertRaises(Exception, self.t_put_multi, [ent1])
+
     def test_tag_create_from_rev_hash(self):
         for cls in self._TEST_CLASSES:
             fookey = ndb.Key(cls.__name__, 'parentfoo')

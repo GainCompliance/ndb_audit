@@ -38,7 +38,6 @@ class AuditMixin(object):
         """ modelled after git commit/parent hashes, although merging not implemented yet """
         props = _entity_dict(self)
         prop_str = '{v1}%s' % '|'.join(['%s=%s' % (k,str(props[k])) for k in sorted(props.iterkeys())])
-        logging.info(prop_str)
         self.data_hash = _hash_str(prop_str)
         return self.data_hash
 
@@ -56,7 +55,6 @@ class AuditMixin(object):
             else:
                 new_aud = self._build_audit_entity(self.rev_hash)
                 self.rev_hash = new_aud.rev_hash
-                logging.debug(new_aud)
             self._skip_pre_hook = True
             return new_aud
         except Exception, e:
@@ -84,11 +82,11 @@ class AuditMixin(object):
         self._skip_pre_hook = False
 
 
-@ndb.transactional_tasklet(xg=True)
+@ndb.transactional_async(xg=True)
 def audit_put_multi_async(entities, **ctx_options):
-    """ a version of ndb's put_multi_async which writes the audit entities (efficiently) as a tasklet """
+    """ a version of ndb's put_multi_async which writes the audit entities transactionally in batch """
     to_put = [e._batch_put_hook() for e in entities] + entities
-    yield ndb.put_multi_async(to_put, **ctx_options)
+    return ndb.put_multi_async(to_put, **ctx_options)
 
 
 class Audit(ndb.Expando):
@@ -122,7 +120,6 @@ class Audit(ndb.Expando):
                   account=entity._account(),
                   timestamp=timestamp)
 
-        logging.info(entity)
         a.populate(**_entity_dict(entity))
         return a
 
@@ -230,7 +227,6 @@ def _entity_dict(entity):
     for k,v in props.iteritems():
         prop = entity._properties[k]
         if isinstance(prop, ndb.StructuredProperty):
-            logging.debug('found StructuredProperty')
             if prop._repeated:
                 # v is a list of dictionaries, but needs to be a list of objects
                 # just replace with actual list from entity
@@ -238,13 +234,11 @@ def _entity_dict(entity):
             else:
                 pass # TODO
         elif isinstance(prop, ndb.BlobProperty):
-            logging.debug('found BlobProperty')
             # v is the unencoded/unmarshaled value but safer just to hang on to raw binary value
             base_val = prop._get_base_value(entity)
             if not base_val:
                 continue
 
-            logging.info(base_val)
             # TODO: pretty dependent on _BaseValue impl which is not great
             if isinstance(base_val, list):
                 props[k] = [b.b_val for b in base_val]
