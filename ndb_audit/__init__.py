@@ -8,6 +8,7 @@ import datetime
 import hashlib
 import logging
 import os
+import time
 
 from google.appengine.ext import ndb
 
@@ -108,6 +109,7 @@ class Audit(ndb.Expando):
 
     @classmethod
     def create_from_entity(cls, entity, parent_hash, timestamp=None):
+        start = time.time()
         """ given an Auditable entity, create a new Audit entity suitable for storing"""
         if not timestamp:
             timestamp = datetime.datetime.utcnow()
@@ -121,6 +123,7 @@ class Audit(ndb.Expando):
                   timestamp=timestamp)
 
         a.populate(**_entity_dict(entity))
+        logging.debug('audit entity created in %s ms' % str((time.time()-start)*1000))
         return a
 
     @classmethod
