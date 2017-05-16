@@ -12,7 +12,7 @@ import time
 
 from google.appengine.ext import ndb
 
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 
 HASH_LENGTH = 8 # (in bytes out of 20 bytes for SHA-1)
 
