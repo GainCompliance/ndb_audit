@@ -6,6 +6,6 @@ coverage==4.4.1
 mock==2.0.0
 python-semantic-release==3.10.1
 setuptools-git-version==1.0.3
-docutils==0.13.1
+docutils==0.14
 pypandoc==1.4
 nose-randomly==1.2.5
