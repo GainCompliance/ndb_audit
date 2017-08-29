@@ -86,8 +86,10 @@ class AuditMixin(object):
 @ndb.transactional_async(xg=True)
 def audit_put_multi_async(entities, **ctx_options):
     """ a version of ndb's put_multi_async which writes the audit entities transactionally in batch """
-    to_put = [e._batch_put_hook() for e in entities] + entities
-    return ndb.put_multi_async(to_put, **ctx_options)
+    entity_keys = ndb.put_multi_async(entities, **ctx_options)
+    audits = [e._batch_put_hook() for e in entities]
+    ndb.put_multi_async(audits, **ctx_options)
+    return entity_keys
 
 
 class Audit(ndb.Expando):
